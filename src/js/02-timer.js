@@ -10,46 +10,46 @@ const timerDaysRef = document.querySelector('[data-days]');
 const timerHoursRef = document.querySelector('[data-hours]');
 const timerMinutesRef = document.querySelector('[data-minutes]');
 const timerSecondsRef = document.querySelector('[data-seconds]');
-
+const currentTime = Date.now();
+let startTime = null;
+let intervalId = null;
+startButton.setAttribute("disabled", "disabled");
 const options = {
     enableTime: true,
     time_24hr: true,
     defaultDate: new Date(),
     minuteIncrement: 1,
     onClose(selectedDates) {
-        if (selectedDates[0] < options.defaultDate) {
-            Notiflix.Notify.failure("Please choose a date in the future");
-            // window.alert("Please choose a date in the future");
-            startButton.setAttribute("disabled", "disabled");
-        } else {
+        startTime = selectedDates[0];
+        if (startTime > currentTime) {
             startButton.removeAttribute("disabled", "disabled");
-            startButton.addEventListener('click', () => {
-                timer.start(selectedDates[0]);        
-        });
+        } else {
+            Notiflix.Notify.failure("Please choose a date in the future");
         };   
     },
 };
+const flatpickrEl  = new flatpickr(timerInput, options);
 
-flatpickr(timerInput, options);
+startButton.addEventListener('click', updateClockRun);
 
-const timer = {
-    intervalId: null,
-    start(startDate) {
-        const startTime = startDate;
-        this.intervalId = setInterval(() => {
-            const currentTime = Date.now();
-            const deltaTime = startTime - currentTime;
-            const { days, hours, minutes, seconds } = convertMs(deltaTime);
-            updateTimerRefs({ days, hours, minutes, seconds });
-        }, 1000);
-    },
-    stop() {
-        if (options.defaultDate === Date.now()) {
-          clearInterval(this.intervalId);  
-        } 
-     },
-};
-
+function updateClockRun() {
+    intervalId = setInterval(() => {
+    const currentTime = Date.now();
+        const deltaTime = startTime - currentTime;
+        const { days, hours, minutes, seconds } = convertMs(deltaTime);
+        updateTimerRefs({ days, hours, minutes, seconds });
+    flatpickrEl.input.setAttribute("disabled", "disabled")
+    if (deltaTime < 1000) {
+        clearInterval(intervalId);
+        timerDaysRef.textContent = '00';
+        timerHoursRef.textContent = '00';
+        timerMinutesRef.textContent = '00';
+        timerSecondsRef.textContent = '00';
+        timerInput.removeAttribute("disabled", "disabled");
+    } 
+    }, 1000);
+}
+ 
 function updateTimerRefs({ days, hours, minutes, seconds }) {
     timerDaysRef.textContent = `${days}`;
     timerHoursRef.textContent = `${hours}`;
